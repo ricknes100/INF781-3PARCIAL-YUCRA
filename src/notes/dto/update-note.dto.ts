@@ -1,4 +1,4 @@
-import { IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class UpdateNoteDto {
   @IsUUID()
@@ -12,8 +12,4 @@ export class UpdateNoteDto {
   @IsString()
   @IsOptional()
   content?: string;
-
-  @IsString()
-  @IsOptional()
-  ownerId?: string;
 }

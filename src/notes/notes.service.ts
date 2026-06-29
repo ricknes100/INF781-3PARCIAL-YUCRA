@@ -1,8 +1,7 @@
 import {
+  ForbiddenException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
@@ -12,40 +11,39 @@ import { Note } from './entities/note.entity';
 
 @Injectable()
 export class NotesService {
-
   constructor(
     @InjectRepository(Note)
-    private readonly noteRepository: Repository<Note>
-  ) {
-  }
+    private readonly noteRepository: Repository<Note>,
+  ) {}
 
-  async create(createNoteDto: CreateNoteDto) {
-    const note = this.noteRepository.create(createNoteDto);
+  async create(createNoteDto: CreateNoteDto, ownerId: string) {
+    const note = this.noteRepository.create({ ...createNoteDto, ownerId });
     return await this.noteRepository.save(note);
   }
 
-  findAll() {
-    return this.noteRepository.find();
+  async findAll(ownerId: string) {
+    return this.noteRepository.find({ where: { ownerId } });
   }
 
-  async findOne(id: string) {
-    const note = await this.noteRepository.findOneBy({ id });
-    if (!note) throw new NotFoundException(`Nota con id ${id} no encontrada`);
+  async findOne(id: string, ownerId: string) {
+    const note = await this.noteRepository.findOne({ where: { id } });
+
+    if (!note) throw new NotFoundException('Nota no existe');
+
+    if (note.ownerId !== ownerId)
+      throw new ForbiddenException('Acceso denegado.');
+
     return note;
   }
 
-  async update(id: string, updateNoteDto: UpdateNoteDto) {
-    const updateResult = await this.noteRepository.update(id, updateNoteDto);
-    if (updateResult.affected === 0) {
-      throw new NotFoundException(`Nota con ID ${id} no encontrada`);
-    }
-    return this.findOne(id);
+  async update(id: string, updateNoteDto: UpdateNoteDto, ownerId: string) {
+    const note = await this.findOne(id, ownerId);
+    Object.assign(note, updateNoteDto);
+    return this.noteRepository.save(note);
   }
 
-  async remove(id: string) {
-    const result = await this.noteRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Nota con ID ${id} no encontrada`);
-    }
+  async remove(id: string, ownerId: string) {
+    const note = await this.findOne(id, ownerId);
+    return this.noteRepository.remove(note);
   }
 }

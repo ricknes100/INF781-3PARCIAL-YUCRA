@@ -62,4 +62,3 @@ CREATE DATABASE nombre_base_de_datos;
 ```bash
 npm run start:dev
 ```
-# 5. Capturas

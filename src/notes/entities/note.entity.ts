@@ -8,7 +8,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { IsOptional } from 'class-validator';
 
 @Entity('note')
 export class Note {
@@ -23,6 +22,10 @@ export class Note {
 
   @Column()
   ownerId: string;
+
+  @ManyToOne(() => User, (user) => user.notes, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ownerId' })
+  owner: User;
 
   @CreateDateColumn()
   createdAt: Date;
